@@ -8,7 +8,6 @@ const state = {
     teachers: [],
     classrooms: [],
     attendance: [],
-    fees: [],
     results: [],
   },
 };
@@ -42,7 +41,7 @@ const configs = {
     ],
   },
   classrooms: {
-    title: "Courses",
+    title: "Classrooms",
     endpoint: "/classrooms/",
     fields: [
       ["class_name", "Class Name", "text"],
@@ -58,20 +57,8 @@ const configs = {
       ["date", "Date", "date"],
     ],
   },
-  fees: {
-    title: "Payment",
-    endpoint: "/fees/",
-    fields: [
-      ["student_id", "Student ID", "number"],
-      ["student_name", "Student Name", "text"],
-      ["student_class", "Class", "text"],
-      ["section", "Section", "text"],
-      ["amount", "Amount", "number"],
-      ["status", "Status", "select", ["pending", "paid"]],
-    ],
-  },
   results: {
-    title: "Exam",
+    title: "Results",
     endpoint: "/results/",
     fields: [
       ["student_roll_no", "Roll No", "text"],
@@ -187,7 +174,6 @@ function primaryName(item, key) {
   if (!item) return "No record selected";
   if (key === "classrooms") return `Class ${item.class_name || ""} ${item.section || ""}`.trim();
   if (key === "attendance") return `Student #${item.student_id || ""}`;
-  if (key === "fees") return item.student_name || `Fee #${item.id}`;
   if (key === "results") return item.student_name || `Result #${item.id}`;
   return item.name || item.username || `Record #${item.id}`;
 }
@@ -198,7 +184,6 @@ function secondaryText(item, key) {
   if (key === "teachers") return `${item.subject || "Subject"} | ${item.employee_id || "-"}`;
   if (key === "classrooms") return `${item.total_students || 0} students`;
   if (key === "attendance") return `${item.status || "-"} | ${item.date || "-"}`;
-  if (key === "fees") return `${item.status || "-"} | Rs ${item.amount || 0}`;
   if (key === "results") return `${item.subject || "-"} | ${item.marks || 0}/${item.total_marks || 0}`;
   return `ID ${item.id || "-"}`;
 }
@@ -246,9 +231,8 @@ function renderDashboard() {
   const totals = [
     ["Students", state.data.students.length],
     ["Teachers", state.data.teachers.length],
-    ["Classes", activeClassCount || state.data.classrooms.length],
+    ["Classrooms", activeClassCount || state.data.classrooms.length],
     ["Attendance", state.data.attendance.length],
-    ["Fees", state.data.fees.length],
     ["Results", state.data.results.length],
   ];
   const maxTotal = Math.max(...totals.map(([, value]) => value), 1);
@@ -303,7 +287,7 @@ function renderDashboard() {
             <div class="class-bar"><span style="width: ${avg}%"></span></div>
             <span class="list-meta">${avg}%</span>
           </div>
-        `).join("") : `<p class="metric-note">Add exam results to see subject performance.</p>`}
+        `).join("") : `<p class="metric-note">Add results to see subject performance.</p>`}
       </div>
     </div>
   `;
@@ -327,7 +311,7 @@ function renderList() {
   const filtered = list.filter((item) => searchableValue(item).includes(query));
   const body = $("#listBody");
 
-  $("#listEyebrow").textContent = key === "classrooms" ? "Courses" : "Directory";
+  $("#listEyebrow").textContent = key === "classrooms" ? "Classrooms" : "Directory";
   $("#listTitle").textContent = titleFor(key);
   body.innerHTML = filtered.map((item) => {
     const active = state.selected?.id === item.id ? "active" : "";
@@ -395,7 +379,6 @@ function renderOverview() {
     ["Latest Student", student ? primaryName(student, "students") : "No students"],
     ["Latest Attendance", latestAttendance ? secondaryText(latestAttendance, "attendance") : "No attendance"],
     ["Latest Result", latestResult ? secondaryText(latestResult, "results") : "No results"],
-    ["Fees API", state.data.fees.length ? `${state.data.fees.length} records` : "Use Payment form"],
     ["Auth", token() ? "Token saved" : "Login required"],
   ];
   $("#overviewBody").innerHTML = cards.map(([label, value]) => `
