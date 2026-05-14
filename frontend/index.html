@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>School API Test UI</title>
+  <link rel="stylesheet" href="/frontend/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>School API Test UI</h1>
+      <p>Use this page to register, login, and test your FastAPI endpoints.</p>
+    </div>
+    <div class="status">
+      <span id="apiStatus" class="dot"></span>
+      <span id="apiStatusText">Checking API</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel auth-panel">
+      <div class="panel-head">
+        <h2>Auth</h2>
+        <button id="clearTokenBtn" type="button">Clear Token</button>
+      </div>
+
+      <div class="grid two">
+        <form id="registerForm" class="form">
+          <h3>Register</h3>
+          <input name="username" placeholder="Username" value="admin">
+          <input name="email" type="email" placeholder="Email" value="admin@example.com">
+          <input name="password" type="password" placeholder="Password" value="admin123">
+          <select name="role">
+            <option value="admin">admin</option>
+            <option value="teacher">teacher</option>
+            <option value="student">student</option>
+          </select>
+          <button type="submit">Register</button>
+        </form>
+
+        <form id="loginForm" class="form">
+          <h3>Login</h3>
+          <input name="username" placeholder="Username" value="admin">
+          <input name="password" type="password" placeholder="Password" value="admin123">
+          <button type="submit">Login</button>
+          <button id="meBtn" type="button" class="secondary">Get Me</button>
+        </form>
+      </div>
+
+      <label class="token-label" for="tokenBox">Bearer Token</label>
+      <textarea id="tokenBox" rows="3" placeholder="Login token will appear here"></textarea>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Quick Tests</h2>
+        <button id="refreshAllBtn" type="button">Refresh Lists</button>
+      </div>
+
+      <div class="actions">
+        <button data-get="/classrooms/">Get Classrooms</button>
+        <button data-get="/students/">Get Students</button>
+        <button data-get="/teachers/">Get Teachers</button>
+        <button data-get="/attendance/">Get Attendance</button>
+        <button data-get="/fees/">Get Fees</button>
+        <button data-get="/results/">Get Results</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Create Data</h2>
+      <div class="grid three">
+        <form id="classroomForm" class="form compact">
+          <h3>Classroom</h3>
+          <input name="class_name" placeholder="Class name" value="10">
+          <input name="section" placeholder="Section" value="A">
+          <button type="submit">Create Classroom</button>
+        </form>
+
+        <form id="studentForm" class="form compact">
+          <h3>Student</h3>
+          <input name="roll_no" placeholder="Roll no" value="S001">
+          <input name="name" placeholder="Name" value="Rahul Sharma">
+          <input name="email" type="email" placeholder="Email" value="rahul@example.com">
+          <input name="phone" placeholder="Phone" value="9876543210">
+          <input name="address" placeholder="Address" value="Delhi">
+          <input name="father_name" placeholder="Father name" value="Mr Sharma">
+          <input name="mother_name" placeholder="Mother name" value="Mrs Sharma">
+          <input name="classroom_id" type="number" placeholder="Classroom ID" value="1">
+          <button type="submit">Create Student</button>
+        </form>
+
+        <form id="teacherForm" class="form compact">
+          <h3>Teacher</h3>
+          <input name="employee_id" placeholder="Employee ID" value="T001">
+          <input name="name" placeholder="Name" value="Priya Singh">
+          <input name="email" type="email" placeholder="Email" value="priya@example.com">
+          <input name="phone" placeholder="Phone" value="9876500000">
+          <input name="subject" placeholder="Subject" value="Math">
+          <input name="salary" type="number" placeholder="Salary" value="45000">
+          <button type="submit">Create Teacher</button>
+        </form>
+
+        <form id="attendanceForm" class="form compact">
+          <h3>Attendance</h3>
+          <input name="student_id" type="number" placeholder="Student ID" value="1">
+          <select name="status">
+            <option value="present">present</option>
+            <option value="absent">absent</option>
+          </select>
+          <input name="date" type="date">
+          <button type="submit">Mark Attendance</button>
+        </form>
+
+        <form id="feeForm" class="form compact">
+          <h3>Fee</h3>
+          <input name="student_id" type="number" placeholder="Student ID" value="1">
+          <input name="student_name" placeholder="Student name" value="Rahul Sharma">
+          <input name="student_class" placeholder="Class" value="10">
+          <input name="section" placeholder="Section" value="A">
+          <input name="amount" type="number" placeholder="Amount" value="12000">
+          <select name="status">
+            <option value="pending">pending</option>
+            <option value="paid">paid</option>
+          </select>
+          <button type="submit">Add Fee</button>
+        </form>
+
+        <form id="resultForm" class="form compact">
+          <h3>Result</h3>
+          <input name="student_roll_no" placeholder="Roll no" value="S001">
+          <input name="student_name" placeholder="Student name" value="Rahul Sharma">
+          <input name="subject" placeholder="Subject" value="Math">
+          <input name="marks" type="number" placeholder="Marks" value="88">
+          <input name="total_marks" type="number" placeholder="Total marks" value="100">
+          <input name="grade" placeholder="Grade" value="A">
+          <button type="submit">Add Result</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel output-panel">
+      <div class="panel-head">
+        <h2>Response</h2>
+        <button id="clearOutputBtn" type="button">Clear</button>
+      </div>
+      <pre id="output">Ready.</pre>
+    </section>
+  </main>
+
+  <script src="/frontend/app.js"></script>
+</body>
+</html>

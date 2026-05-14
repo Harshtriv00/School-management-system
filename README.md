@@ -67,6 +67,8 @@ The API will run at:
 http://127.0.0.1:8000
 ```
 
+Opening this URL will load the dummy frontend automatically.
+
 ## API Docs
 
 FastAPI automatically provides API documentation:
@@ -79,6 +81,26 @@ Alternative docs:
 
 ```text
 http://127.0.0.1:8000/redoc
+```
+
+## Dummy Frontend
+
+A simple API testing frontend is available at:
+
+```text
+http://127.0.0.1:8000
+```
+
+If port `8000` is busy, run the app on another port:
+
+```bash
+uvicorn app.main:app --reload --port 8001
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8001
 ```
 
 ## Notes

@@ -1,4 +1,7 @@
+from pathlib import Path
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from app.database import Base, engine
 # Import all models so SQLAlchemy can create tables
 import app.models
@@ -20,6 +23,11 @@ app = FastAPI(
     version="1.0.0"
  ) 
 
+frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
+
+if frontend_dir.exists():
+    app.mount("/frontend", StaticFiles(directory=frontend_dir), name="frontend")
+
 # Register routers
 app.include_router(auth.router)
 app.include_router(students.router)
@@ -29,9 +37,17 @@ app.include_router(attendance.router)
 app.include_router(fees.router)
 app.include_router(results.router)
 
-# Home route
-@app.get("/")
-def home():
+# Frontend route
+@app.get("/", include_in_schema=False)
+def frontend_home():
+    return FileResponse(frontend_dir / "index.html")
+
+@app.get("/test-ui", include_in_schema=False)
+def test_ui():
+    return FileResponse(frontend_dir / "index.html")
+
+@app.get("/api/status")
+def api_status():
     return {
         "message": "School Management System Running"
     }
