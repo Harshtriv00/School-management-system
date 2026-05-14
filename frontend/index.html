@@ -3,31 +3,57 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>School API Test UI</title>
+  <title>School Dashboard</title>
   <link rel="stylesheet" href="/frontend/styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <h1>School API Test UI</h1>
-      <p>Use this page to register, login, and test your FastAPI endpoints.</p>
-    </div>
-    <div class="status">
-      <span id="apiStatus" class="dot"></span>
-      <span id="apiStatusText">Checking API</span>
-    </div>
-  </header>
-
-  <main class="layout">
-    <section class="panel auth-panel">
-      <div class="panel-head">
-        <h2>Auth</h2>
-        <button id="clearTokenBtn" type="button">Clear Token</button>
+  <div class="page">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">S</span>
+        <span>SCHOOL</span>
       </div>
 
-      <div class="grid two">
-        <form id="registerForm" class="form">
-          <h3>Register</h3>
+      <nav class="nav">
+        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-btn" data-view="students">Students</button>
+        <button class="nav-btn" data-view="teachers">Teachers</button>
+        <button class="nav-btn" data-view="attendance">Attendance</button>
+        <button class="nav-btn" data-view="classrooms">Courses</button>
+        <button class="nav-btn" data-view="results">Exam</button>
+        <button class="nav-btn" data-view="fees">Payment</button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="nav-btn" data-view="settings">Settings</button>
+        <button id="logoutBtn" class="nav-btn">Logout</button>
+      </div>
+    </aside>
+
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">School Management</p>
+          <h1 id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="top-actions">
+          <input id="globalSearch" type="search" placeholder="Search students, teachers, IDs...">
+          <span id="apiStatus" class="status-pill">Checking</span>
+          <button id="refreshBtn" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <section id="authBanner" class="auth-banner">
+        <div>
+          <h2>Login to use protected APIs</h2>
+          <p>Register an admin once, then login. Token will be saved in this browser.</p>
+        </div>
+        <form id="loginForm" class="inline-form">
+          <input name="username" placeholder="Username" value="admin">
+          <input name="password" type="password" placeholder="Password" value="admin123">
+          <button type="submit">Login</button>
+        </form>
+        <form id="registerForm" class="inline-form">
           <input name="username" placeholder="Username" value="admin">
           <input name="email" type="email" placeholder="Email" value="admin@example.com">
           <input name="password" type="password" placeholder="Password" value="admin123">
@@ -38,116 +64,124 @@
           </select>
           <button type="submit">Register</button>
         </form>
+      </section>
 
-        <form id="loginForm" class="form">
-          <h3>Login</h3>
-          <input name="username" placeholder="Username" value="admin">
-          <input name="password" type="password" placeholder="Password" value="admin123">
-          <button type="submit">Login</button>
-          <button id="meBtn" type="button" class="secondary">Get Me</button>
-        </form>
-      </div>
+      <section class="stats-grid">
+        <article class="stat-card">
+          <span>Students</span>
+          <strong id="studentCount">0</strong>
+        </article>
+        <article class="stat-card">
+          <span>Teachers</span>
+          <strong id="teacherCount">0</strong>
+        </article>
+        <article class="stat-card">
+          <span>Classrooms</span>
+          <strong id="classroomCount">0</strong>
+        </article>
+        <article class="stat-card">
+          <span>Attendance</span>
+          <strong id="attendanceCount">0</strong>
+        </article>
+      </section>
 
-      <label class="token-label" for="tokenBox">Bearer Token</label>
-      <textarea id="tokenBox" rows="3" placeholder="Login token will appear here"></textarea>
-    </section>
+      <section id="dashboardPanel" class="dashboard-panel">
+        <article class="chart-card wide">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Overview</p>
+              <h2>School Activity</h2>
+            </div>
+            <span class="chart-chip">Live API Data</span>
+          </div>
+          <div id="activityChart" class="bar-chart"></div>
+        </article>
 
-    <section class="panel">
-      <div class="panel-head">
-        <h2>Quick Tests</h2>
-        <button id="refreshAllBtn" type="button">Refresh Lists</button>
-      </div>
+        <article class="chart-card">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Attendance</p>
+              <h2>Present vs Absent</h2>
+            </div>
+          </div>
+          <div id="attendanceDonut" class="donut-wrap"></div>
+        </article>
 
-      <div class="actions">
-        <button data-get="/classrooms/">Get Classrooms</button>
-        <button data-get="/students/">Get Students</button>
-        <button data-get="/teachers/">Get Teachers</button>
-        <button data-get="/attendance/">Get Attendance</button>
-        <button data-get="/fees/">Get Fees</button>
-        <button data-get="/results/">Get Results</button>
-      </div>
-    </section>
+        <article class="chart-card">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Exam</p>
+              <h2>Average Marks</h2>
+            </div>
+          </div>
+          <div id="marksGauge" class="gauge-wrap"></div>
+        </article>
 
-    <section class="panel">
-      <h2>Create Data</h2>
-      <div class="grid three">
-        <form id="classroomForm" class="form compact">
-          <h3>Classroom</h3>
-          <input name="class_name" placeholder="Class name" value="10">
-          <input name="section" placeholder="Section" value="A">
-          <button type="submit">Create Classroom</button>
-        </form>
+        <article class="chart-card wide">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Classrooms</p>
+              <h2>Students by Class</h2>
+            </div>
+          </div>
+          <div id="classChart" class="class-chart"></div>
+        </article>
+      </section>
 
-        <form id="studentForm" class="form compact">
-          <h3>Student</h3>
-          <input name="roll_no" placeholder="Roll no" value="S001">
-          <input name="name" placeholder="Name" value="Rahul Sharma">
-          <input name="email" type="email" placeholder="Email" value="rahul@example.com">
-          <input name="phone" placeholder="Phone" value="9876543210">
-          <input name="address" placeholder="Address" value="Delhi">
-          <input name="father_name" placeholder="Father name" value="Mr Sharma">
-          <input name="mother_name" placeholder="Mother name" value="Mrs Sharma">
-          <input name="classroom_id" type="number" placeholder="Classroom ID" value="1">
-          <button type="submit">Create Student</button>
-        </form>
+      <section id="recordPanel" class="content-grid">
+        <aside class="list-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow" id="listEyebrow">Directory</p>
+              <h2 id="listTitle">Students</h2>
+            </div>
+            <button id="newRecordBtn" type="button">New</button>
+          </div>
+          <input id="listSearch" type="search" placeholder="Search current list...">
+          <div id="listBody" class="list-body"></div>
+        </aside>
 
-        <form id="teacherForm" class="form compact">
-          <h3>Teacher</h3>
-          <input name="employee_id" placeholder="Employee ID" value="T001">
-          <input name="name" placeholder="Name" value="Priya Singh">
-          <input name="email" type="email" placeholder="Email" value="priya@example.com">
-          <input name="phone" placeholder="Phone" value="9876500000">
-          <input name="subject" placeholder="Subject" value="Math">
-          <input name="salary" type="number" placeholder="Salary" value="45000">
-          <button type="submit">Create Teacher</button>
-        </form>
+        <section class="detail-panel">
+          <div id="heroCard" class="hero-card">
+            <div class="avatar" id="heroAvatar">S</div>
+            <div>
+              <h2 id="heroName">Welcome</h2>
+              <p id="heroMeta">Login and refresh to load dashboard data.</p>
+            </div>
+            <div class="hero-art"></div>
+          </div>
 
-        <form id="attendanceForm" class="form compact">
-          <h3>Attendance</h3>
-          <input name="student_id" type="number" placeholder="Student ID" value="1">
-          <select name="status">
-            <option value="present">present</option>
-            <option value="absent">absent</option>
-          </select>
-          <input name="date" type="date">
-          <button type="submit">Mark Attendance</button>
-        </form>
+          <div class="details-card">
+            <div class="panel-head">
+              <h2 id="detailTitle">Details</h2>
+              <div class="button-row">
+                <button id="editBtn" type="button">Edit</button>
+                <button id="deleteBtn" type="button" class="danger">Delete</button>
+              </div>
+            </div>
+            <div id="detailBody" class="detail-grid"></div>
+          </div>
 
-        <form id="feeForm" class="form compact">
-          <h3>Fee</h3>
-          <input name="student_id" type="number" placeholder="Student ID" value="1">
-          <input name="student_name" placeholder="Student name" value="Rahul Sharma">
-          <input name="student_class" placeholder="Class" value="10">
-          <input name="section" placeholder="Section" value="A">
-          <input name="amount" type="number" placeholder="Amount" value="12000">
-          <select name="status">
-            <option value="pending">pending</option>
-            <option value="paid">paid</option>
-          </select>
-          <button type="submit">Add Fee</button>
-        </form>
-
-        <form id="resultForm" class="form compact">
-          <h3>Result</h3>
-          <input name="student_roll_no" placeholder="Roll no" value="S001">
-          <input name="student_name" placeholder="Student name" value="Rahul Sharma">
-          <input name="subject" placeholder="Subject" value="Math">
-          <input name="marks" type="number" placeholder="Marks" value="88">
-          <input name="total_marks" type="number" placeholder="Total marks" value="100">
-          <input name="grade" placeholder="Grade" value="A">
-          <button type="submit">Add Result</button>
-        </form>
-      </div>
-    </section>
-
-    <section class="panel output-panel">
-      <div class="panel-head">
-        <h2>Response</h2>
-        <button id="clearOutputBtn" type="button">Clear</button>
-      </div>
-      <pre id="output">Ready.</pre>
-    </section>
-  </main>
+          <div class="work-card">
+            <div class="tabs">
+              <button class="tab active" data-tab="overview">Overview</button>
+              <button class="tab" data-tab="form">Create / Update</button>
+              <button class="tab" data-tab="raw">API Response</button>
+            </div>
+            <div id="overviewTab" class="tab-panel active">
+              <div id="overviewBody" class="overview-grid"></div>
+            </div>
+            <div id="formTab" class="tab-panel">
+              <form id="recordForm" class="record-form"></form>
+            </div>
+            <div id="rawTab" class="tab-panel">
+              <pre id="output">Ready.</pre>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
 
   <script src="/frontend/app.js"></script>
 </body>
