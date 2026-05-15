@@ -10,6 +10,9 @@ from app.security import get_current_user, require_role
 
 router = APIRouter(prefix="/students", tags=["Students"])
 
+def get_current_student_record(db: Session, current_user):
+    return db.query(Student).filter(Student.email == current_user.email).first()
+
 def format_student(student: Student):
     return {
         "id": student.id,
@@ -56,7 +59,7 @@ def get_students(
     current_user = Depends(get_current_user)
 ):
     if current_user.role == "student":
-        student = db.query(Student).filter(Student.roll_no == current_user.username).first()
+        student = get_current_student_record(db, current_user)
         return [format_student(student)] if student else []
 
     require_role(current_user, ["admin", "teacher"])
@@ -74,7 +77,7 @@ def get_student_results(
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    if current_user.role == "student" and current_user.username != student.roll_no:
+    if current_user.role == "student" and student.email != current_user.email:
         raise HTTPException(status_code=403, detail="Not authorized")
 
     require_role(current_user, ["admin", "teacher", "student"])
@@ -94,7 +97,7 @@ def get_student(
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    if current_user.role == "student" and current_user.username != student.roll_no:
+    if current_user.role == "student" and student.email != current_user.email:
         raise HTTPException(status_code=403, detail="Not authorized")
 
     require_role(current_user, ["admin", "teacher", "student"])

@@ -2,10 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.result import Result
+from app.models.students import Student
 from app.schemas.results import ResultCreate, ResultResponse, ResultUpdate
 from app.security import get_current_user, require_role
 
 router = APIRouter(prefix="/results", tags=["Results"])
+
+def get_current_student_record(db: Session, current_user):
+    return db.query(Student).filter(Student.email == current_user.email).first()
 
 #  Teacher Only
 @router.post("/", response_model=ResultResponse)
@@ -36,10 +40,14 @@ def get_results(
     elif current_user.role == "teacher":
         return db.query(Result).all()
 
-    #  Student → only matching roll number if username is roll number
+    #  Student → only results for the student linked by email
     elif current_user.role == "student":
+        student = get_current_student_record(db, current_user)
+        if not student:
+            return []
+
         return db.query(Result).filter(
-            Result.student_roll_no == current_user.username
+            Result.student_roll_no == student.roll_no
         ).all()
 
     #  Other roles not allowed
@@ -56,8 +64,10 @@ def get_result(
     if not result:
         raise HTTPException(status_code=404, detail="Result not found")
 
-    if current_user.role == "student" and result.student_roll_no != current_user.username:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    if current_user.role == "student":
+        student = get_current_student_record(db, current_user)
+        if not student or result.student_roll_no != student.roll_no:
+            raise HTTPException(status_code=403, detail="Not authorized")
 
     require_role(current_user, ["admin", "teacher", "student"])
     return result
