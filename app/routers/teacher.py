@@ -26,6 +26,18 @@ def create_teacher(
             status_code=400,
             detail="Employee ID already exists"
         )
+
+    if data.email:
+        existing_email = db.query(Teacher).filter(
+            Teacher.email == data.email
+        ).first()
+
+        if existing_email:
+            raise HTTPException(
+                status_code=400,
+                detail="Teacher email already exists"
+            )
+
     #  Create teacher
     teacher = Teacher(**data.model_dump())
 
@@ -43,14 +55,7 @@ def get_teachers(
 ):
     require_role(current_user, ["admin", "teacher"])
 
-    teachers = db.query(Teacher).all()
-
-    #  CLEAN INVALID EMAILS (prevents crash)
-    for t in teachers:
-        if t.email and "@" not in t.email:
-            t.email = None
-
-    return teachers
+    return db.query(Teacher).all()
 
 #  GET SINGLE TEACHER
 @router.get("/{teacher_id}", response_model=TeacherResponse)
@@ -65,10 +70,6 @@ def get_teacher(
 
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
-
-    #  Fix invalid email
-    if teacher.email and "@" not in teacher.email:
-        teacher.email = None
 
     return teacher
 
@@ -86,6 +87,29 @@ def update_teacher(
 
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
+
+    existing_employee = db.query(Teacher).filter(
+        Teacher.employee_id == data.employee_id,
+        Teacher.id != teacher_id
+    ).first()
+
+    if existing_employee:
+        raise HTTPException(
+            status_code=400,
+            detail="Employee ID already exists"
+        )
+
+    if data.email:
+        existing_email = db.query(Teacher).filter(
+            Teacher.email == data.email,
+            Teacher.id != teacher_id
+        ).first()
+
+        if existing_email:
+            raise HTTPException(
+                status_code=400,
+                detail="Teacher email already exists"
+            )
 
     #  Update fields
     for key, value in data.model_dump().items():

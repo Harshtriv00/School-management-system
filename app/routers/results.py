@@ -21,6 +21,16 @@ def add_result(
     #  Role check
     require_role(current_user, ["admin"])
 
+    student = db.query(Student).filter(
+        Student.roll_no == data.student_roll_no
+    ).first()
+
+    if not student:
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found for this roll number"
+        )
+
     result = Result(**data.model_dump())
     db.add(result)
     db.commit()

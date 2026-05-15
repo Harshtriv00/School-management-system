@@ -45,6 +45,11 @@ def create_student(
     if existing:
         raise HTTPException(status_code=400, detail="Roll number already exists")
 
+    if student.email:
+        existing_email = db.query(Student).filter(Student.email == student.email).first()
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Student email already exists")
+
     new_student = Student(**student.model_dump())
 
     db.add(new_student)
@@ -130,6 +135,15 @@ def update_student(
 
     if existing:
         raise HTTPException(status_code=400, detail="Roll number already exists")
+
+    if student.email:
+        existing_email = db.query(Student).filter(
+            Student.email == student.email,
+            Student.id != student_id
+        ).first()
+
+        if existing_email:
+            raise HTTPException(status_code=400, detail="Student email already exists")
 
     # Update fields
     for key, value in student.model_dump().items():
