@@ -5,14 +5,12 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+from app.config import ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
 from app.database import get_db
 from app.models.user import User
 
-# CONFIG
-
-SECRET_KEY = "your_secret_key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is not set in environment variables")
 
 # PASSWORD HASHING
 

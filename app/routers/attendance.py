@@ -4,7 +4,7 @@ from datetime import date
 from app.database import get_db
 from app.models.attendance import Attendance
 from app.models.students import Student 
-from app.schemas.attendance import AttendanceCreate, AttendanceResponse
+from app.schemas.attendance import AttendanceBulkCreate, AttendanceCreate, AttendanceResponse
 from app.security import require_teacher, require_admin
 
 router = APIRouter(prefix="/attendance", tags=["Attendance"])
@@ -38,6 +38,52 @@ def mark_attendance(
     db.refresh(record)
 
     return record
+
+@router.post("/bulk", response_model=list[AttendanceResponse])
+def mark_bulk_attendance(
+    data: AttendanceBulkCreate,
+    db: Session = Depends(get_db),
+    user = Depends(require_teacher)
+):
+    if not data.records:
+        raise HTTPException(status_code=400, detail="No attendance records provided")
+
+    seen = set()
+    records = []
+
+    for item in data.records:
+        key = (item.student_id, item.date)
+        if key in seen:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Duplicate attendance in request for student {item.student_id} on {item.date}"
+            )
+        seen.add(key)
+
+        student = db.query(Student).filter(Student.id == item.student_id).first()
+        if not student:
+            raise HTTPException(status_code=404, detail=f"Student {item.student_id} not found")
+
+        existing = db.query(Attendance).filter(
+            Attendance.student_id == item.student_id,
+            Attendance.date == item.date
+        ).first()
+
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Attendance already marked for student {item.student_id} on {item.date}"
+            )
+
+        records.append(Attendance(**item.model_dump()))
+
+    db.add_all(records)
+    db.commit()
+
+    for record in records:
+        db.refresh(record)
+
+    return records
 
 #  GET ALL ATTENDANCE 
 

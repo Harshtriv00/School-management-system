@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.fees import Fee
@@ -23,12 +23,35 @@ def add_fee(
     db.refresh(fee)
     return fee
 
-#  Admin + Teacher
-@router.get("/")
+@router.get("/", response_model=list[FeeResponse])
 def get_fees(
+    student_id: int | None = None,
+    status: str | None = None,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    require_role(current_user, ["admin"])  
+    require_role(current_user, ["admin", "teacher"])
 
-    return {"message": "Fees data"}
+    query = db.query(Fee)
+
+    if student_id:
+        query = query.filter(Fee.student_id == student_id)
+
+    if status:
+        query = query.filter(Fee.status == status)
+
+    return query.all()
+
+@router.get("/{fee_id}", response_model=FeeResponse)
+def get_fee(
+    fee_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    require_role(current_user, ["admin", "teacher"])
+
+    fee = db.query(Fee).filter(Fee.id == fee_id).first()
+    if not fee:
+        raise HTTPException(status_code=404, detail="Fee not found")
+
+    return fee

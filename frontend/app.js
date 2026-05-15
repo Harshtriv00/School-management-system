@@ -351,8 +351,8 @@ function renderDetails() {
   $("#heroMeta").textContent = item ? secondaryText(item, key) : "Select a record from the list.";
   $("#detailTitle").textContent = `${titleFor(key)} Details`;
 
-  const editable = ["students", "teachers"].includes(key);
-  const deletable = ["students", "teachers", "attendance"].includes(key);
+  const editable = ["students", "teachers", "classrooms", "results"].includes(key);
+  const deletable = ["students", "teachers", "classrooms", "attendance", "results"].includes(key);
   $("#editBtn").style.display = item && editable ? "" : "none";
   $("#deleteBtn").style.display = item && deletable ? "" : "none";
 
@@ -392,7 +392,7 @@ function renderOverview() {
 function renderForm() {
   const key = currentListKey();
   const config = configs[key];
-  const canEdit = state.editing && state.selected && ["students", "teachers"].includes(key);
+  const canEdit = state.editing && state.selected && ["students", "teachers", "classrooms", "results"].includes(key);
   const source = canEdit ? state.selected : {};
 
   if (!config?.fields) {
@@ -489,7 +489,7 @@ async function saveRecord(event) {
   const key = currentListKey();
   const config = configs[key];
   const payload = formToObject(event.currentTarget);
-  const isUpdate = state.editing && state.selected && ["students", "teachers"].includes(key);
+  const isUpdate = state.editing && state.selected && ["students", "teachers", "classrooms", "results"].includes(key);
   const url = isUpdate ? `${config.endpoint}${state.selected.id}` : config.endpoint;
 
   try {
@@ -512,7 +512,7 @@ async function saveRecord(event) {
 async function deleteSelected() {
   const key = currentListKey();
   if (!state.selected) return;
-  if (!["students", "teachers", "attendance"].includes(key)) return;
+  if (!["students", "teachers", "classrooms", "attendance", "results"].includes(key)) return;
 
   try {
     const data = await api(`${configs[key].endpoint}${state.selected.id}`, { method: "DELETE" });

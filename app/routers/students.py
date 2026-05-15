@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.models.result import Result
 from app.models.students import Student
 from app.models.classroom import Classroom
+from app.schemas.results import ResultResponse
 from app.schemas.student import StudentCreate, StudentOut
 from app.security import get_current_user, require_role
 
@@ -55,6 +57,25 @@ def get_students(
 ):
     students = db.query(Student).all()
     return [format_student(s) for s in students]
+
+@router.get("/{student_id}/results", response_model=list[ResultResponse])
+def get_student_results(
+    student_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    if current_user.role == "student" and current_user.username != student.roll_no:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    require_role(current_user, ["admin", "teacher", "student"])
+
+    return db.query(Result).filter(
+        Result.student_roll_no == student.roll_no
+    ).all()
 
 @router.get("/{student_id}", response_model=StudentOut)
 def get_student(
