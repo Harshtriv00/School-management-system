@@ -55,6 +55,12 @@ def get_students(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
+    if current_user.role == "student":
+        student = db.query(Student).filter(Student.roll_no == current_user.username).first()
+        return [format_student(student)] if student else []
+
+    require_role(current_user, ["admin", "teacher"])
+
     students = db.query(Student).all()
     return [format_student(s) for s in students]
 
@@ -87,6 +93,11 @@ def get_student(
 
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
+
+    if current_user.role == "student" and current_user.username != student.roll_no:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    require_role(current_user, ["admin", "teacher", "student"])
 
     return format_student(student)
 

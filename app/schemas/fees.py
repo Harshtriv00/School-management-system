@@ -1,13 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
+from typing import Literal
 
 class FeeCreate(BaseModel):
     student_id: int
     student_name: str
     student_class: str
     section: str
-    amount: int
-    status: Optional[str] = "pending"
+    amount: int = Field(gt=0)
+    status: Optional[Literal["pending", "paid"]] = "pending"
 
 
 class FeeResponse(BaseModel):
@@ -17,7 +18,7 @@ class FeeResponse(BaseModel):
     student_class: str
     section: str
     amount: int
-    status: str
+    status: Literal["pending", "paid"]
     
  
     class Config:

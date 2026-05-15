@@ -75,7 +75,17 @@ def update_result(
     if not result:
         raise HTTPException(status_code=404, detail="Result not found")
 
-    for key, value in data.model_dump(exclude_unset=True).items():
+    updates = data.model_dump(exclude_unset=True)
+    new_marks = updates.get("marks", result.marks)
+    new_total_marks = updates.get("total_marks", result.total_marks)
+
+    if new_marks is not None and new_total_marks is not None and new_marks > new_total_marks:
+        raise HTTPException(
+            status_code=400,
+            detail="marks cannot be greater than total_marks"
+        )
+
+    for key, value in updates.items():
         setattr(result, key, value)
 
     db.commit()

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import Literal
 from app.database import get_db
 from app.models.fees import Fee
 from app.schemas.fees import FeeCreate, FeeResponse
@@ -26,7 +27,7 @@ def add_fee(
 @router.get("/", response_model=list[FeeResponse])
 def get_fees(
     student_id: int | None = None,
-    status: str | None = None,
+    status: Literal["pending", "paid"] | None = None,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):

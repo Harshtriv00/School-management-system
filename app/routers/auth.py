@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
-from app.schemas.auth import LoginSchema, TokenSchema
-from app.schemas.user import UserCreate, UserResponse
+from app.models.role import UserRole
+from app.schemas.auth import LoginSchema, RegisterSchema, TokenSchema
+from app.schemas.user import UserResponse
 from app.security import (
     hash_password,
     verify_password,
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 # REGISTER
 
 @router.post("/register", response_model=UserResponse)
-def register(user: UserCreate, db: Session = Depends(get_db)):
+def register(user: RegisterSchema, db: Session = Depends(get_db)):
 
     # Check if user exists
     existing_user = db.query(User).filter(
@@ -32,7 +33,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         email=user.email,
         password=hash_password(user.password),
-        role=user.role
+        role=UserRole.student
     )
 
     db.add(new_user)

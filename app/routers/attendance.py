@@ -31,7 +31,7 @@ def mark_attendance(
     if existing:
         raise HTTPException(400, "Attendance already marked")
 
-    record = Attendance(**data.dict())
+    record = Attendance(**data.model_dump())
 
     db.add(record)
     db.commit()

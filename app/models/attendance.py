@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Date, Integer, String, ForeignKey
 from app.database import Base
 
 class Attendance(Base):
@@ -8,4 +8,4 @@ class Attendance(Base):
 
     student_id = Column(Integer, ForeignKey("students.id"))
     status = Column(String(20))
-    date = Column(String(20))
+    date = Column(Date)
