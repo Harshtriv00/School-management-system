@@ -527,12 +527,11 @@ async function deleteSelected() {
 
 $("#loginForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const body = new URLSearchParams(new FormData(event.currentTarget));
+  const body = formToObject(event.currentTarget);
   try {
     const data = await api("/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body,
+      body: JSON.stringify(body),
     });
     setToken(data.access_token);
     show(data, "Logged In");
