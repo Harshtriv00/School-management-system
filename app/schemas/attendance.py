@@ -1,9 +1,10 @@
 from pydantic import BaseModel
+from typing import Literal
 from typing import List
 
 class AttendanceCreate(BaseModel):
     student_id: int
-    status: str   # present / absent
+    status: Literal["present", "absent"]
     date: str
 
 class AttendanceBulkCreate(BaseModel):
@@ -13,7 +14,7 @@ class AttendanceBulkCreate(BaseModel):
 class AttendanceResponse(BaseModel):
     id: int
     student_id: int
-    status: str
+    status: Literal["present", "absent"]
     date: str
 
     class Config:

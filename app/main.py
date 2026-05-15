@@ -3,8 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from app.database import Base, engine
-# Import all models so SQLAlchemy can create tables
-import app.models
+from app.models import register_models
 # Import routers
 from app.routers import auth
 from app.routers import students 
@@ -15,6 +14,7 @@ from app.routers import fees
 from app.routers import results
 
 # Create database tables
+register_models()
 Base.metadata.create_all(bind=engine)
 
 # FastAPI app

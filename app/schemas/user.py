@@ -1,11 +1,12 @@
 from pydantic import BaseModel, EmailStr
+from app.models.role import UserRole
 
 # BASE
 
 class UserBase(BaseModel):
     username: str
     email: EmailStr
-    role: str   # admin / teacher / student
+    role: UserRole
 
 class UserCreate(UserBase):
     password: str
