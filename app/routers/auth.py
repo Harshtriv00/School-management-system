@@ -5,7 +5,7 @@ from app.models.user import User
 from app.models.role import UserRole
 from app.schemas.auth import LoginSchema, RegisterSchema, TokenSchema
 from app.schemas.user import UserResponse
-from app.security import (
+from app.security import ( 
     hash_password,
     verify_password,
     create_access_token,
