@@ -3,12 +3,15 @@ const state = {
   view: "dashboard",
   selected: null,
   editing: false,
+  currentUser: null,
+  loading: false,
   data: {
     students: [],
     teachers: [],
     classrooms: [],
     attendance: [],
     results: [],
+    fees: [],
   },
 };
 
@@ -25,7 +28,7 @@ const configs = {
       ["address", "Address", "text"],
       ["father_name", "Father Name", "text"],
       ["mother_name", "Mother Name", "text"],
-      ["classroom_id", "Classroom ID", "number"],
+      ["classroom_id", "Classroom", "classroom"],
     ],
   },
   teachers: {
@@ -52,7 +55,7 @@ const configs = {
     title: "Attendance",
     endpoint: "/attendance/",
     fields: [
-      ["student_id", "Student ID", "number"],
+      ["student_id", "Student", "student"],
       ["status", "Status", "select", ["present", "absent"]],
       ["date", "Date", "date"],
     ],
@@ -61,7 +64,7 @@ const configs = {
     title: "Results",
     endpoint: "/results/",
     fields: [
-      ["student_roll_no", "Roll No", "text"],
+      ["student_roll_no", "Student", "studentRoll"],
       ["student_name", "Student Name", "text"],
       ["subject", "Subject", "text"],
       ["marks", "Marks", "number"],
@@ -69,7 +72,16 @@ const configs = {
       ["grade", "Grade", "text"],
     ],
   },
-  settings: { title: "Settings", list: "students" },
+  fees: {
+    title: "Fees",
+    endpoint: "/fees/",
+    fields: [
+      ["student_id", "Student", "student"],
+      ["amount", "Amount", "number"],
+      ["status", "Status", "select", ["pending", "paid"]],
+    ],
+  },
+  settings: { title: "Settings", list: "settings" },
 };
 
 const labels = {
@@ -100,6 +112,24 @@ const labels = {
   grade: "Grade",
 };
 
+const permissions = {
+  admin: {
+    create: ["students", "teachers", "classrooms", "attendance", "results", "fees"],
+    edit: ["students", "teachers", "classrooms", "results", "fees"],
+    delete: ["students", "teachers", "classrooms", "attendance", "results", "fees"],
+  },
+  teacher: {
+    create: ["attendance"],
+    edit: ["results"],
+    delete: [],
+  },
+  student: {
+    create: [],
+    edit: [],
+    delete: [],
+  },
+};
+
 const today = new Date().toISOString().slice(0, 10);
 const $ = (selector) => document.querySelector(selector);
 const output = $("#output");
@@ -108,25 +138,59 @@ function token() {
   return localStorage.getItem(tokenKey) || "";
 }
 
+function currentRole() {
+  return state.currentUser?.role || "";
+}
+
+function can(action, key) {
+  return Boolean(permissions[currentRole()]?.[action]?.includes(key));
+}
+
+function canView(key) {
+  if (["dashboard", "settings"].includes(key)) return true;
+  if (!state.currentUser) return false;
+  if (currentRole() === "admin") return ["students", "teachers", "classrooms", "attendance", "results", "fees"].includes(key);
+  if (currentRole() === "teacher") return ["students", "teachers", "classrooms", "attendance", "results", "fees"].includes(key);
+  if (currentRole() === "student") return ["students", "results"].includes(key);
+  return false;
+}
+
 function setToken(value) {
   if (value) {
     localStorage.setItem(tokenKey, value);
   } else {
     localStorage.removeItem(tokenKey);
+    state.currentUser = null;
   }
   updateAuthBanner();
 }
 
 function updateAuthBanner() {
   $("#authBanner").classList.toggle("hidden", Boolean(token()));
+  $("#userBadge").textContent = state.currentUser
+    ? `${state.currentUser.username} (${state.currentUser.role})`
+    : "Guest";
 }
 
 function show(data, label = "Response") {
   output.textContent = `${label}\n\n${JSON.stringify(data, null, 2)}`;
 }
 
+function errorMessage(error) {
+  try {
+    const parsed = JSON.parse(error.message || error);
+    if (typeof parsed.detail === "string") return parsed.detail;
+    if (Array.isArray(parsed.detail)) {
+      return parsed.detail.map((item) => item.msg || item.message || JSON.stringify(item)).join("\n");
+    }
+    return parsed.message || JSON.stringify(parsed, null, 2);
+  } catch {
+    return error.message || String(error);
+  }
+}
+
 function showError(error, label = "Error") {
-  output.textContent = `${label}\n\n${error.message || error}`;
+  output.textContent = `${label}\n\n${errorMessage(error)}`;
 }
 
 async function api(path, options = {}) {
@@ -157,8 +221,48 @@ function formToObject(form) {
   return data;
 }
 
+function selectedStudentById(id) {
+  return state.data.students.find((student) => String(student.id) === String(id));
+}
+
+function selectedStudentByRoll(rollNo) {
+  return state.data.students.find((student) => String(student.roll_no) === String(rollNo));
+}
+
+function preparePayload(key, payload) {
+  if (key === "fees") {
+    const student = selectedStudentById(payload.student_id);
+    if (student) {
+      payload.student_name = student.name;
+      payload.student_class = student.class_name || String(student.classroom_id || "");
+      payload.section = student.section || "";
+    }
+  }
+
+  if (key === "results") {
+    const student = selectedStudentByRoll(payload.student_roll_no);
+    if (student) {
+      payload.student_name = student.name;
+    }
+  }
+
+  return payload;
+}
+
+function validatePayload(key, payload) {
+  if (key === "results" && payload.marks != null && payload.total_marks != null && payload.marks > payload.total_marks) {
+    return "Marks cannot be greater than total marks.";
+  }
+
+  if (key === "fees" && payload.amount <= 0) {
+    return "Fee amount must be greater than 0.";
+  }
+
+  return "";
+}
+
 function currentListKey() {
-  if (state.view === "dashboard" || state.view === "settings") return "students";
+  if (state.view === "dashboard") return "students";
   return state.view;
 }
 
@@ -175,6 +279,7 @@ function primaryName(item, key) {
   if (key === "classrooms") return `Class ${item.class_name || ""} ${item.section || ""}`.trim();
   if (key === "attendance") return `Student #${item.student_id || ""}`;
   if (key === "results") return item.student_name || `Result #${item.id}`;
+  if (key === "fees") return item.student_name || `Fee #${item.id}`;
   return item.name || item.username || `Record #${item.id}`;
 }
 
@@ -185,6 +290,7 @@ function secondaryText(item, key) {
   if (key === "classrooms") return `${item.total_students || 0} students`;
   if (key === "attendance") return `${item.status || "-"} | ${item.date || "-"}`;
   if (key === "results") return `${item.subject || "-"} | ${item.marks || 0}/${item.total_marks || 0}`;
+  if (key === "fees") return `${item.status || "-"} | Rs. ${item.amount || 0}`;
   return `ID ${item.id || "-"}`;
 }
 
@@ -193,11 +299,19 @@ function initials(text) {
 }
 
 function setView(view) {
+  if (!canView(view)) {
+    showError("You do not have access to this section.", "Access Denied");
+    activateTab("raw");
+    return;
+  }
   state.view = view;
   state.editing = false;
   state.selected = null;
   document.querySelectorAll(".nav-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.view === view);
+    if (btn.dataset.view) {
+      btn.style.display = canView(btn.dataset.view) ? "" : "none";
+    }
   });
   render();
 }
@@ -207,6 +321,7 @@ function renderStats() {
   $("#teacherCount").textContent = state.data.teachers.length;
   $("#classroomCount").textContent = state.data.classrooms.length;
   $("#attendanceCount").textContent = state.data.attendance.length;
+  $("#feeCount").textContent = state.data.fees.length;
 }
 
 function renderDashboard() {
@@ -234,6 +349,7 @@ function renderDashboard() {
     ["Classrooms", activeClassCount || state.data.classrooms.length],
     ["Attendance", state.data.attendance.length],
     ["Results", state.data.results.length],
+    ["Fees", state.data.fees.length],
   ];
   const maxTotal = Math.max(...totals.map(([, value]) => value), 1);
 
@@ -311,8 +427,16 @@ function renderList() {
   const filtered = list.filter((item) => searchableValue(item).includes(query));
   const body = $("#listBody");
 
-  $("#listEyebrow").textContent = key === "classrooms" ? "Classrooms" : "Directory";
+  $("#listEyebrow").textContent = key === "settings" ? "Account" : key === "classrooms" ? "Classrooms" : "Directory";
   $("#listTitle").textContent = titleFor(key);
+
+  if (key === "settings") {
+    body.innerHTML = state.currentUser
+      ? `<article class="list-item active"><span class="mini-avatar">${initials(state.currentUser.username)}</span><div class="list-main"><strong>${state.currentUser.username}</strong><span>${state.currentUser.email || "-"} | ${state.currentUser.role}</span></div></article>`
+      : `<p class="list-meta">Login to view account details.</p>`;
+    return;
+  }
+
   body.innerHTML = filtered.map((item) => {
     const active = state.selected?.id === item.id ? "active" : "";
     const name = primaryName(item, key);
@@ -343,7 +467,7 @@ function renderList() {
 
 function renderDetails() {
   const key = currentListKey();
-  const item = state.selected;
+  const item = key === "settings" ? state.currentUser : state.selected;
   const name = primaryName(item, key);
 
   $("#heroAvatar").textContent = initials(name);
@@ -351,8 +475,8 @@ function renderDetails() {
   $("#heroMeta").textContent = item ? secondaryText(item, key) : "Select a record from the list.";
   $("#detailTitle").textContent = `${titleFor(key)} Details`;
 
-  const editable = ["students", "teachers", "classrooms", "results"].includes(key);
-  const deletable = ["students", "teachers", "classrooms", "attendance", "results"].includes(key);
+  const editable = item && can("edit", key);
+  const deletable = item && can("delete", key);
   $("#editBtn").style.display = item && editable ? "" : "none";
   $("#deleteBtn").style.display = item && deletable ? "" : "none";
 
@@ -379,7 +503,7 @@ function renderOverview() {
     ["Latest Student", student ? primaryName(student, "students") : "No students"],
     ["Latest Attendance", latestAttendance ? secondaryText(latestAttendance, "attendance") : "No attendance"],
     ["Latest Result", latestResult ? secondaryText(latestResult, "results") : "No results"],
-    ["Auth", token() ? "Token saved" : "Login required"],
+    ["Auth", state.currentUser ? `${state.currentUser.username} (${state.currentUser.role})` : "Login required"],
   ];
   $("#overviewBody").innerHTML = cards.map(([label, value]) => `
     <article class="overview-card">
@@ -392,8 +516,14 @@ function renderOverview() {
 function renderForm() {
   const key = currentListKey();
   const config = configs[key];
-  const canEdit = state.editing && state.selected && ["students", "teachers", "classrooms", "results"].includes(key);
+  const canEdit = state.editing && state.selected && can("edit", key);
+  const canCreate = can("create", key);
   const source = canEdit ? state.selected : {};
+
+  if (!canEdit && !canCreate) {
+    $("#recordForm").innerHTML = `<p class="list-meta">You have read-only access here.</p>`;
+    return;
+  }
 
   if (!config?.fields) {
     $("#recordForm").innerHTML = `<p class="list-meta">No form available for this view.</p>`;
@@ -402,6 +532,39 @@ function renderForm() {
 
   $("#recordForm").innerHTML = config.fields.map(([name, label, type, options]) => {
     const value = source[name] ?? (name === "date" ? today : "");
+    if (type === "classroom") {
+      return `
+        <label>
+          <span class="list-meta">${label}</span>
+          <select name="${name}" required>
+            <option value="">Select classroom</option>
+            ${state.data.classrooms.map((room) => `<option value="${room.id}" ${String(value) === String(room.id) ? "selected" : ""}>Class ${room.class_name} ${room.section}</option>`).join("")}
+          </select>
+        </label>
+      `;
+    }
+    if (type === "student") {
+      return `
+        <label>
+          <span class="list-meta">${label}</span>
+          <select name="${name}" required>
+            <option value="">Select student</option>
+            ${state.data.students.map((student) => `<option value="${student.id}" ${String(value) === String(student.id) ? "selected" : ""}>${student.name} | Roll ${student.roll_no}</option>`).join("")}
+          </select>
+        </label>
+      `;
+    }
+    if (type === "studentRoll") {
+      return `
+        <label>
+          <span class="list-meta">${label}</span>
+          <select name="${name}" required>
+            <option value="">Select student</option>
+            ${state.data.students.map((student) => `<option value="${student.roll_no}" ${String(value) === String(student.roll_no) ? "selected" : ""}>${student.name} | Roll ${student.roll_no}</option>`).join("")}
+          </select>
+        </label>
+      `;
+    }
     if (type === "select") {
       return `
         <label>
@@ -415,7 +578,7 @@ function renderForm() {
     return `
       <label>
         <span class="list-meta">${label}</span>
-        <input name="${name}" type="${type}" value="${value ?? ""}" placeholder="${label}">
+        <input name="${name}" type="${type}" value="${value ?? ""}" placeholder="${label}" ${name === "student_name" && key === "results" ? "readonly" : ""}>
       </label>
     `;
   }).join("") + `
@@ -434,11 +597,18 @@ function renderForm() {
 
 function render() {
   $("#pageTitle").textContent = titleFor();
+  document.querySelectorAll(".nav-btn[data-view]").forEach((btn) => {
+    btn.style.display = canView(btn.dataset.view) ? "" : "none";
+    btn.classList.toggle("active", btn.dataset.view === state.view);
+  });
   renderStats();
   renderDashboard();
   const isDashboard = state.view === "dashboard";
   $("#dashboardPanel").classList.toggle("hidden", !isDashboard);
   $("#recordPanel").classList.toggle("hidden", isDashboard);
+  $("#newRecordBtn").style.display = !isDashboard && can("create", currentListKey()) ? "" : "none";
+  $("#refreshBtn").disabled = state.loading;
+  $("#refreshBtn").textContent = state.loading ? "Loading..." : "Refresh";
   if (!isDashboard) {
     renderList();
     renderDetails();
@@ -456,6 +626,8 @@ function activateTab(tab) {
 
 async function loadAll() {
   const status = $("#apiStatus");
+  state.loading = true;
+  render();
   try {
     await api("/api/status");
     status.textContent = "API Online";
@@ -466,21 +638,39 @@ async function loadAll() {
   }
 
   if (!token()) {
+    state.loading = false;
+    render();
+    return;
+  }
+
+  try {
+    state.currentUser = await api("/auth/me");
+  } catch (error) {
+    setToken("");
+    state.loading = false;
+    showError(error, "Session Expired");
     render();
     return;
   }
 
   for (const key of Object.keys(state.data)) {
     const endpoint = configs[key]?.endpoint;
+    if (!canView(key)) {
+      state.data[key] = [];
+      continue;
+    }
     if (!endpoint) continue;
     try {
       const data = await api(endpoint);
       state.data[key] = Array.isArray(data) ? data : [];
     } catch (error) {
       state.data[key] = [];
-      showError(error, `Load ${titleFor(key)} Failed`);
+      if (![401, 403].some((code) => error.message?.includes(String(code)))) {
+        showError(error, `Load ${titleFor(key)} Failed`);
+      }
     }
   }
+  state.loading = false;
   render();
 }
 
@@ -488,11 +678,26 @@ async function saveRecord(event) {
   event.preventDefault();
   const key = currentListKey();
   const config = configs[key];
-  const payload = formToObject(event.currentTarget);
-  const isUpdate = state.editing && state.selected && ["students", "teachers", "classrooms", "results"].includes(key);
+  const payload = preparePayload(key, formToObject(event.currentTarget));
+  const validationError = validatePayload(key, payload);
+  if (validationError) {
+    showError(validationError, `Save ${titleFor(key)} Failed`);
+    activateTab("raw");
+    return;
+  }
+
+  const isUpdate = state.editing && state.selected && can("edit", key);
+  if (!isUpdate && !can("create", key)) {
+    showError("You do not have permission for this action.", "Access Denied");
+    activateTab("raw");
+    return;
+  }
+
   const url = isUpdate ? `${config.endpoint}${state.selected.id}` : config.endpoint;
 
   try {
+    state.loading = true;
+    render();
     const data = await api(url, {
       method: isUpdate ? "PUT" : "POST",
       body: JSON.stringify(payload),
@@ -504,24 +709,36 @@ async function saveRecord(event) {
     activateTab("overview");
     render();
   } catch (error) {
+    state.loading = false;
     showError(error, `Save ${titleFor(key)} Failed`);
     activateTab("raw");
+    render();
   }
 }
 
 async function deleteSelected() {
   const key = currentListKey();
   if (!state.selected) return;
-  if (!["students", "teachers", "classrooms", "attendance", "results"].includes(key)) return;
+  if (!can("delete", key)) {
+    showError("You do not have permission for this action.", "Access Denied");
+    activateTab("raw");
+    return;
+  }
+
+  if (!confirm(`Delete ${primaryName(state.selected, key)}?`)) return;
 
   try {
+    state.loading = true;
+    render();
     const data = await api(`${configs[key].endpoint}${state.selected.id}`, { method: "DELETE" });
     show(data, `Deleted ${titleFor(key)}`);
     state.selected = null;
     await loadAll();
   } catch (error) {
+    state.loading = false;
     showError(error, `Delete ${titleFor(key)} Failed`);
     activateTab("raw");
+    render();
   }
 }
 
@@ -529,6 +746,8 @@ $("#loginForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const body = formToObject(event.currentTarget);
   try {
+    state.loading = true;
+    render();
     const data = await api("/auth/login", {
       method: "POST",
       body: JSON.stringify(body),
@@ -537,13 +756,17 @@ $("#loginForm").addEventListener("submit", async (event) => {
     show(data, "Logged In");
     await loadAll();
   } catch (error) {
+    state.loading = false;
     showError(error, "Login Failed");
+    render();
   }
 });
 
 $("#registerForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
+    state.loading = true;
+    render();
     const data = await api("/auth/register", {
       method: "POST",
       body: JSON.stringify(formToObject(event.currentTarget)),
@@ -551,11 +774,15 @@ $("#registerForm").addEventListener("submit", async (event) => {
     show(data, "Registered User");
   } catch (error) {
     showError(error, "Register Failed");
+  } finally {
+    state.loading = false;
+    render();
   }
 });
 
 $("#logoutBtn").addEventListener("click", () => {
   setToken("");
+  state.view = "dashboard";
   state.selected = null;
   for (const key of Object.keys(state.data)) state.data[key] = [];
   show({ message: "Logged out locally" }, "Logout");

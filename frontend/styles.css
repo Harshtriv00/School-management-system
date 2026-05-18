@@ -178,7 +178,7 @@ select:focus {
 
 .top-actions {
   display: grid;
-  grid-template-columns: minmax(260px, 520px) auto auto;
+  grid-template-columns: minmax(240px, 520px) auto auto auto;
   align-items: center;
   gap: 12px;
   width: min(760px, 100%);
@@ -225,7 +225,7 @@ select:focus {
 }
 
 #registerForm {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
 }
 
 .auth-banner.hidden {
@@ -234,7 +234,7 @@ select:focus {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -680,7 +680,7 @@ pre {
 
   .topbar,
   .top-actions,
-  .stats-grid,
+    .stats-grid,
   .bar-chart,
   .detail-grid,
   .overview-grid,

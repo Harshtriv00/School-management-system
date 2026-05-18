@@ -56,3 +56,41 @@ def get_fee(
         raise HTTPException(status_code=404, detail="Fee not found")
 
     return fee
+
+@router.put("/{fee_id}", response_model=FeeResponse)
+def update_fee(
+    fee_id: int,
+    data: FeeCreate,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    require_role(current_user, ["admin"])
+
+    fee = db.query(Fee).filter(Fee.id == fee_id).first()
+    if not fee:
+        raise HTTPException(status_code=404, detail="Fee not found")
+
+    for key, value in data.model_dump().items():
+        setattr(fee, key, value)
+
+    db.commit()
+    db.refresh(fee)
+
+    return fee
+
+@router.delete("/{fee_id}")
+def delete_fee(
+    fee_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    require_role(current_user, ["admin"])
+
+    fee = db.query(Fee).filter(Fee.id == fee_id).first()
+    if not fee:
+        raise HTTPException(status_code=404, detail="Fee not found")
+
+    db.delete(fee)
+    db.commit()
+
+    return {"message": "Fee deleted successfully"}

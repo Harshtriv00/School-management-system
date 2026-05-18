@@ -21,6 +21,7 @@
         <button class="nav-btn" data-view="attendance">Attendance</button>
         <button class="nav-btn" data-view="classrooms">Classrooms</button>
         <button class="nav-btn" data-view="results">Results</button>
+        <button class="nav-btn" data-view="fees">Fees</button>
       </nav>
 
       <div class="sidebar-bottom">
@@ -37,6 +38,7 @@
         </div>
         <div class="top-actions">
           <input id="globalSearch" type="search" placeholder="Search students, teachers, IDs...">
+          <span id="userBadge" class="status-pill">Guest</span>
           <span id="apiStatus" class="status-pill">Checking</span>
           <button id="refreshBtn" type="button">Refresh</button>
         </div>
@@ -76,6 +78,10 @@
         <article class="stat-card">
           <span>Attendance</span>
           <strong id="attendanceCount">0</strong>
+        </article>
+        <article class="stat-card">
+          <span>Fees</span>
+          <strong id="feeCount">0</strong>
         </article>
       </section>
 
