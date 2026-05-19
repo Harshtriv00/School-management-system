@@ -1,12 +1,12 @@
 :root {
-  --bg: #eef3f8;
-  --sidebar: #172033;
-  --sidebar-soft: #202b42;
+  --bg: #f3f6fa;
+  --sidebar: #162130;
+  --sidebar-soft: #223149;
   --surface: #ffffff;
-  --surface-soft: #f8fafc;
-  --line: #dce4ee;
-  --text: #1f2a3d;
-  --muted: #6f7d91;
+  --surface-soft: #f7f9fc;
+  --line: #d9e2ed;
+  --text: #202b3c;
+  --muted: #687789;
   --accent: #2f9ca0;
   --accent-dark: #257d81;
   --sky: #4a90d9;
@@ -23,10 +23,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    linear-gradient(135deg, rgba(47, 156, 160, 0.12), transparent 36%),
-    linear-gradient(315deg, rgba(217, 154, 43, 0.12), transparent 32%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: Inter, "Segoe UI", Arial, Helvetica, sans-serif;
 }
@@ -46,10 +43,12 @@ button {
   color: #ffffff;
   cursor: pointer;
   font-weight: 700;
+  transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 button:hover {
   background: var(--accent-dark);
+  box-shadow: 0 8px 20px rgba(47, 156, 160, 0.18);
 }
 
 button:disabled {
@@ -75,6 +74,7 @@ select {
   color: var(--text);
   background: #ffffff;
   outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 input:focus,
@@ -84,12 +84,12 @@ select:focus {
 }
 
 .page {
-  width: min(1500px, calc(100% - 32px));
-  min-height: calc(100vh - 32px);
-  margin: 16px auto;
+  width: min(1540px, calc(100% - 28px));
+  min-height: calc(100vh - 28px);
+  margin: 14px auto;
   display: grid;
-  grid-template-columns: 224px minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 16px;
 }
 
 .sidebar {
@@ -97,7 +97,7 @@ select:focus {
   top: 16px;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 32px);
+  height: calc(100vh - 28px);
   padding: 18px 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
@@ -113,6 +113,20 @@ select:focus {
   padding: 8px 10px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   font-weight: 800;
+}
+
+.brand strong,
+.brand small {
+  display: block;
+}
+
+.brand small {
+  margin-top: 2px;
+  color: #96a6bc;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .brand-mark {
@@ -143,12 +157,28 @@ select:focus {
   background: transparent;
   color: #cdd7e5;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-btn::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: transparent;
 }
 
 .nav-btn:hover,
 .nav-btn.active {
   background: var(--sidebar-soft);
   color: #ffffff;
+}
+
+.nav-btn.active::after {
+  background: var(--accent);
 }
 
 .nav-btn.active::before {
@@ -164,7 +194,7 @@ select:focus {
 
 .shell {
   display: grid;
-  gap: 16px;
+  gap: 14px;
   align-content: start;
 }
 
@@ -182,7 +212,7 @@ select:focus {
 
 .topbar {
   display: grid;
-  grid-template-columns: minmax(220px, auto) minmax(360px, 780px);
+  grid-template-columns: minmax(220px, auto) minmax(360px, 820px);
   gap: 18px;
   align-items: center;
   padding: 18px 20px;
@@ -197,7 +227,7 @@ select:focus {
 }
 
 .topbar h1 {
-  font-size: 32px;
+  font-size: 30px;
 }
 
 .eyebrow {
@@ -210,9 +240,17 @@ select:focus {
 
 .top-actions {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto auto auto;
+  grid-template-columns: minmax(220px, 1fr) auto auto 42px;
   align-items: center;
   gap: 10px;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  padding: 0;
+  font-size: 20px;
 }
 
 .status-pill {
@@ -268,7 +306,7 @@ select:focus {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .stat-card {
@@ -312,8 +350,15 @@ select:focus {
 
 .stat-card strong {
   display: block;
-  margin-top: 10px;
-  font-size: 34px;
+  margin-top: 8px;
+  font-size: 32px;
+}
+
+.stat-card small {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-weight: 700;
 }
 
 .dashboard-panel {
@@ -328,7 +373,7 @@ select:focus {
 }
 
 .chart-card {
-  min-height: 320px;
+  min-height: 300px;
   display: grid;
   grid-template-rows: auto 1fr;
   padding: 20px;
@@ -358,6 +403,11 @@ select:focus {
   min-height: 240px;
   padding-top: 18px;
   border-bottom: 1px solid var(--line);
+}
+
+.bar-fill,
+.class-bar span {
+  transition: height 220ms ease, width 220ms ease;
 }
 
 .bar-item {
@@ -501,13 +551,13 @@ select:focus {
 
 .content-grid {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: 350px minmax(0, 1fr);
   gap: 16px;
 }
 
 .list-panel {
   padding: 18px;
-  min-height: 660px;
+  min-height: 640px;
 }
 
 .panel-head {
@@ -522,7 +572,7 @@ select:focus {
   display: grid;
   gap: 8px;
   margin-top: 14px;
-  max-height: 548px;
+  max-height: 528px;
   overflow: auto;
   padding-right: 4px;
 }
@@ -536,12 +586,17 @@ select:focus {
   border: 1px solid transparent;
   border-radius: 8px;
   cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
 .list-item:hover,
 .list-item.active {
   border-color: rgba(47, 156, 160, 0.2);
   background: #eef8f8;
+}
+
+.list-item:hover {
+  transform: translateY(-1px);
 }
 
 .mini-avatar,
@@ -593,6 +648,11 @@ select:focus {
   color: #ffffff;
 }
 
+.hero-card > *:not(.hero-art) {
+  position: relative;
+  z-index: 1;
+}
+
 .avatar {
   width: 74px;
   height: 74px;
@@ -614,6 +674,7 @@ select:focus {
   height: 180px;
   border: 28px solid rgba(244, 200, 109, 0.9);
   border-radius: 50%;
+  opacity: 0.76;
 }
 
 .hero-art::after {
@@ -649,6 +710,10 @@ select:focus {
   background: var(--surface-soft);
 }
 
+.detail-field {
+  min-width: 0;
+}
+
 .detail-field span,
 .overview-card span {
   display: block;
@@ -676,6 +741,7 @@ select:focus {
   background: transparent;
   color: var(--muted);
   border-radius: 7px;
+  min-width: 0;
 }
 
 .tab.active {
@@ -718,6 +784,67 @@ pre {
   word-break: break-word;
 }
 
+.empty-state {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.empty-state strong {
+  color: var(--text);
+}
+
+.skeleton {
+  min-height: 58px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #edf2f7, #f8fafc, #edf2f7);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease infinite;
+}
+
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 20;
+  max-width: min(360px, calc(100% - 36px));
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.error {
+  border-color: #f3bcc6;
+  color: var(--danger);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
 @media (max-width: 1180px) {
   .page {
     grid-template-columns: 1fr;
@@ -731,6 +858,16 @@ pre {
   .nav,
   .sidebar-bottom {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .nav-btn {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .nav-btn::after,
+  .nav-btn.active::before {
+    display: none;
   }
 
   .topbar,
@@ -750,7 +887,7 @@ pre {
     width: 100%;
     min-height: 100vh;
     margin: 0;
-    padding: 12px;
+    padding: 10px;
   }
 
   .top-actions,
@@ -764,6 +901,11 @@ pre {
     grid-template-columns: 1fr;
   }
 
+  .topbar {
+    gap: 12px;
+    padding: 16px;
+  }
+
   .nav,
   .sidebar-bottom {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -775,5 +917,29 @@ pre {
 
   .topbar h1 {
     font-size: 26px;
+  }
+
+  .auth-banner,
+  .chart-card,
+  .details-card,
+  .work-card,
+  .list-panel {
+    padding: 16px;
+  }
+
+  .button-row,
+  .form-actions,
+  .panel-head {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .button-row button,
+  .form-actions button {
+    flex: 1 1 140px;
+  }
+
+  .tabs {
+    grid-template-columns: 1fr;
   }
 }

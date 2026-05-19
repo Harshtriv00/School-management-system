@@ -133,6 +133,27 @@ const permissions = {
 const today = new Date().toISOString().slice(0, 10);
 const $ = (selector) => document.querySelector(selector);
 const output = $("#output");
+let toastTimer;
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;",
+  }[char]));
+}
+
+function notify(message, type = "success") {
+  const toast = $("#toast");
+  toast.textContent = message;
+  toast.className = `toast show ${type === "error" ? "error" : ""}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.className = "toast";
+  }, 2800);
+}
 
 function token() {
   return localStorage.getItem(tokenKey) || "";
@@ -174,6 +195,7 @@ function updateAuthBanner() {
 
 function show(data, label = "Response") {
   output.textContent = `${label}\n\n${JSON.stringify(data, null, 2)}`;
+  notify(label);
 }
 
 function errorMessage(error) {
@@ -191,6 +213,7 @@ function errorMessage(error) {
 
 function showError(error, label = "Error") {
   output.textContent = `${label}\n\n${errorMessage(error)}`;
+  notify(errorMessage(error), "error");
 }
 
 async function api(path, options = {}) {
@@ -357,7 +380,7 @@ function renderDashboard() {
     <div class="bar-item">
       <span class="bar-value">${value}</span>
       <div class="bar-fill" style="height: ${Math.max((value / maxTotal) * 100, 8)}%"></div>
-      <span class="bar-label">${label}</span>
+      <span class="bar-label">${escapeHTML(label)}</span>
     </div>
   `).join("");
 
@@ -399,7 +422,7 @@ function renderDashboard() {
       <div class="subject-chart">
         ${subjectRows.length ? subjectRows.map(([subject, avg]) => `
           <div class="class-row">
-            <strong>${subject}</strong>
+            <strong>${escapeHTML(subject)}</strong>
             <div class="class-bar"><span style="width: ${avg}%"></span></div>
             <span class="list-meta">${avg}%</span>
           </div>
@@ -413,7 +436,7 @@ function renderDashboard() {
   const maxClass = Math.max(...fallbackClassCounts.map(([, count]) => count), 1);
   $("#classChart").innerHTML = fallbackClassCounts.length ? fallbackClassCounts.map(([label, count]) => `
     <div class="class-row">
-      <strong>${label}</strong>
+      <strong>${escapeHTML(label)}</strong>
       <div class="class-bar"><span style="width: ${Math.max((count / maxClass) * 100, count ? 8 : 0)}%"></span></div>
       <span class="list-meta">${count}</span>
     </div>
@@ -432,8 +455,13 @@ function renderList() {
 
   if (key === "settings") {
     body.innerHTML = state.currentUser
-      ? `<article class="list-item active"><span class="mini-avatar">${initials(state.currentUser.username)}</span><div class="list-main"><strong>${state.currentUser.username}</strong><span>${state.currentUser.email || "-"} | ${state.currentUser.role}</span></div></article>`
-      : `<p class="list-meta">Login to view account details.</p>`;
+      ? `<article class="list-item active"><span class="mini-avatar">${escapeHTML(initials(state.currentUser.username))}</span><div class="list-main"><strong>${escapeHTML(state.currentUser.username)}</strong><span>${escapeHTML(state.currentUser.email || "-")} | ${escapeHTML(state.currentUser.role)}</span></div></article>`
+      : `<div class="empty-state"><strong>Account unavailable</strong><span>Login to view account details.</span></div>`;
+    return;
+  }
+
+  if (state.loading && !filtered.length) {
+    body.innerHTML = Array.from({ length: 5 }, () => `<div class="skeleton"></div>`).join("");
     return;
   }
 
@@ -442,15 +470,15 @@ function renderList() {
     const name = primaryName(item, key);
     return `
       <article class="list-item ${active}" data-id="${item.id}">
-        <span class="mini-avatar">${initials(name)}</span>
+        <span class="mini-avatar">${escapeHTML(initials(name))}</span>
         <div class="list-main">
-          <strong>${name}</strong>
-          <span>${secondaryText(item, key)}</span>
+          <strong>${escapeHTML(name)}</strong>
+          <span>${escapeHTML(secondaryText(item, key))}</span>
         </div>
         <span class="list-meta">#${item.id || "-"}</span>
       </article>
     `;
-  }).join("") || `<p class="list-meta">No records found.</p>`;
+  }).join("") || `<div class="empty-state"><strong>No records found</strong><span>Try a different search or create a new ${escapeHTML(titleFor(key).toLowerCase())} record.</span></div>`;
 
   body.querySelectorAll(".list-item").forEach((item) => {
     item.addEventListener("click", () => {
@@ -488,8 +516,8 @@ function renderDetails() {
   const entries = Object.entries(item).filter(([field]) => field !== "students");
   $("#detailBody").innerHTML = entries.map(([field, value]) => `
     <div class="detail-field">
-      <span>${labels[field] || field}</span>
-      <strong>${value ?? "-"}</strong>
+      <span>${escapeHTML(labels[field] || field)}</span>
+      <strong>${escapeHTML(value ?? "-")}</strong>
     </div>
   `).join("");
 }
@@ -507,8 +535,8 @@ function renderOverview() {
   ];
   $("#overviewBody").innerHTML = cards.map(([label, value]) => `
     <article class="overview-card">
-      <span>${label}</span>
-      <strong>${value}</strong>
+      <span>${escapeHTML(label)}</span>
+      <strong>${escapeHTML(value)}</strong>
     </article>
   `).join("");
 }
@@ -538,7 +566,7 @@ function renderForm() {
           <span class="list-meta">${label}</span>
           <select name="${name}" required>
             <option value="">Select classroom</option>
-            ${state.data.classrooms.map((room) => `<option value="${room.id}" ${String(value) === String(room.id) ? "selected" : ""}>Class ${room.class_name} ${room.section}</option>`).join("")}
+            ${state.data.classrooms.map((room) => `<option value="${escapeHTML(room.id)}" ${String(value) === String(room.id) ? "selected" : ""}>Class ${escapeHTML(room.class_name)} ${escapeHTML(room.section)}</option>`).join("")}
           </select>
         </label>
       `;
@@ -549,7 +577,7 @@ function renderForm() {
           <span class="list-meta">${label}</span>
           <select name="${name}" required>
             <option value="">Select student</option>
-            ${state.data.students.map((student) => `<option value="${student.id}" ${String(value) === String(student.id) ? "selected" : ""}>${student.name} | Roll ${student.roll_no}</option>`).join("")}
+            ${state.data.students.map((student) => `<option value="${escapeHTML(student.id)}" ${String(value) === String(student.id) ? "selected" : ""}>${escapeHTML(student.name)} | Roll ${escapeHTML(student.roll_no)}</option>`).join("")}
           </select>
         </label>
       `;
@@ -560,7 +588,7 @@ function renderForm() {
           <span class="list-meta">${label}</span>
           <select name="${name}" required>
             <option value="">Select student</option>
-            ${state.data.students.map((student) => `<option value="${student.roll_no}" ${String(value) === String(student.roll_no) ? "selected" : ""}>${student.name} | Roll ${student.roll_no}</option>`).join("")}
+            ${state.data.students.map((student) => `<option value="${escapeHTML(student.roll_no)}" ${String(value) === String(student.roll_no) ? "selected" : ""}>${escapeHTML(student.name)} | Roll ${escapeHTML(student.roll_no)}</option>`).join("")}
           </select>
         </label>
       `;
@@ -570,20 +598,20 @@ function renderForm() {
         <label>
           <span class="list-meta">${label}</span>
           <select name="${name}">
-            ${options.map((option) => `<option value="${option}" ${value === option ? "selected" : ""}>${option}</option>`).join("")}
+            ${options.map((option) => `<option value="${escapeHTML(option)}" ${value === option ? "selected" : ""}>${escapeHTML(option)}</option>`).join("")}
           </select>
         </label>
       `;
     }
     return `
       <label>
-        <span class="list-meta">${label}</span>
-        <input name="${name}" type="${type}" value="${value ?? ""}" placeholder="${label}" ${name === "student_name" && key === "results" ? "readonly" : ""}>
+        <span class="list-meta">${escapeHTML(label)}</span>
+        <input name="${name}" type="${type}" value="${escapeHTML(value ?? "")}" placeholder="${escapeHTML(label)}" ${name === "student_name" && key === "results" ? "readonly" : ""}>
       </label>
     `;
   }).join("") + `
     <div class="form-actions">
-      <button type="submit">${canEdit ? "Update" : "Create"} ${titleFor(key)}</button>
+      <button type="submit">${canEdit ? "Update" : "Create"} ${escapeHTML(titleFor(key))}</button>
       <button id="cancelEditBtn" type="button">Cancel</button>
     </div>
   `;
@@ -608,7 +636,7 @@ function render() {
   $("#recordPanel").classList.toggle("hidden", isDashboard);
   $("#newRecordBtn").style.display = !isDashboard && can("create", currentListKey()) ? "" : "none";
   $("#refreshBtn").disabled = state.loading;
-  $("#refreshBtn").textContent = state.loading ? "Loading..." : "Refresh";
+  $("#refreshBtn").innerHTML = state.loading ? `<span aria-hidden="true">...</span>` : `<span aria-hidden="true">↻</span>`;
   if (!isDashboard) {
     renderList();
     renderDetails();

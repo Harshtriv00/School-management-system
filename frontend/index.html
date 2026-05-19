@@ -11,22 +11,25 @@
     <aside class="sidebar">
       <div class="brand">
         <span class="brand-mark">S</span>
-        <span>SCHOOL</span>
+        <span>
+          <strong>SchoolDesk</strong>
+          <small>Admin Suite</small>
+        </span>
       </div>
 
       <nav class="nav">
-        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
-        <button class="nav-btn" data-view="students">Students</button>
-        <button class="nav-btn" data-view="teachers">Teachers</button>
-        <button class="nav-btn" data-view="attendance">Attendance</button>
-        <button class="nav-btn" data-view="classrooms">Classrooms</button>
-        <button class="nav-btn" data-view="results">Results</button>
-        <button class="nav-btn" data-view="fees">Fees</button>
+        <button class="nav-btn active" data-view="dashboard"><span>Dashboard</span></button>
+        <button class="nav-btn" data-view="students"><span>Students</span></button>
+        <button class="nav-btn" data-view="teachers"><span>Teachers</span></button>
+        <button class="nav-btn" data-view="attendance"><span>Attendance</span></button>
+        <button class="nav-btn" data-view="classrooms"><span>Classrooms</span></button>
+        <button class="nav-btn" data-view="results"><span>Results</span></button>
+        <button class="nav-btn" data-view="fees"><span>Fees</span></button>
       </nav>
 
       <div class="sidebar-bottom">
-        <button class="nav-btn" data-view="settings">Settings</button>
-        <button id="logoutBtn" class="nav-btn">Logout</button>
+        <button class="nav-btn" data-view="settings"><span>Settings</span></button>
+        <button id="logoutBtn" class="nav-btn"><span>Logout</span></button>
       </div>
     </aside>
 
@@ -40,7 +43,9 @@
           <input id="globalSearch" type="search" placeholder="Search students, teachers, IDs...">
           <span id="userBadge" class="status-pill">Guest</span>
           <span id="apiStatus" class="status-pill">Checking</span>
-          <button id="refreshBtn" type="button">Refresh</button>
+          <button id="refreshBtn" type="button" class="icon-button" title="Refresh data" aria-label="Refresh data">
+            <span aria-hidden="true">↻</span>
+          </button>
         </div>
       </header>
 
@@ -66,22 +71,27 @@
         <article class="stat-card">
           <span>Students</span>
           <strong id="studentCount">0</strong>
+          <small>Active records</small>
         </article>
         <article class="stat-card">
           <span>Teachers</span>
           <strong id="teacherCount">0</strong>
+          <small>Faculty directory</small>
         </article>
         <article class="stat-card">
           <span>Classrooms</span>
           <strong id="classroomCount">0</strong>
+          <small>Sections tracked</small>
         </article>
         <article class="stat-card">
           <span>Attendance</span>
           <strong id="attendanceCount">0</strong>
+          <small>Entries recorded</small>
         </article>
         <article class="stat-card">
           <span>Fees</span>
           <strong id="feeCount">0</strong>
+          <small>Payment rows</small>
         </article>
       </section>
 
@@ -182,6 +192,7 @@
       </section>
     </main>
   </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="/frontend/app.js"></script>
 </body>
